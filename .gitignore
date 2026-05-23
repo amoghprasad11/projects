@@ -1,0 +1,9 @@
+node_modules
+dist
+*.tsbuildinfo
+.env
+.env.local
+api/dist
+api/node_modules
+api/local.settings.json
+functions/
