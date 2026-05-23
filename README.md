@@ -1,92 +1,145 @@
 # Raptor Robotics A team
 
-A Firebase-hosted React app for a high school robotics team. Members can register with email verification, add planned
-attendance that can sync to a Google Calendar, choose one or more team roles, post updates, comment on collaboration
-threads, and keep an audit history of role and schedule changes.
+An Azure-hosted React app for a high school robotics team. Members can sign in through Microsoft Entra / Azure Static
+Web Apps authentication, add planned attendance that can sync to Microsoft Outlook Calendar, choose one or more team
+roles, post updates, comment on collaboration threads, and keep an audit history of role and schedule changes.
 
 ## Features
 
-- Email/password registration with email verification before app access.
-- Password field is limited to 6-8 characters in the UI. Firebase requires at least 6 characters.
-- Google Calendar OAuth connection for creating team attendance events.
+- Azure Static Web Apps hosting and authentication.
+- Microsoft Entra External ID / Entra ID sign-in for email-authenticated accounts.
+- Microsoft Graph Calendar integration for creating, updating, and deleting Outlook calendar attendance events.
+- Azure Functions API for team data.
+- Azure Table Storage persistence for members, planned attendance, history, updates, comments, and notification targets.
 - Planned attendance dashboard with total upcoming team hours and per-member planned hours.
 - Self-selected roles: Driver, Builder, Coder, and Notebooker. Multiple people can choose the same role.
 - History feed for attendance additions, edits, deletes, and role changes.
 - Team updates and collaboration comments.
-- Firebase Cloud Messaging registration plus optional Cloud Functions to send phone/browser notifications for new updates
-  and comments.
-- Firebase Hosting, Firestore rules, and Cloud Functions config for deployment from a Google account.
+- Notification target capture so you can connect Azure Communication Services, Notification Hubs, Teams, or another phone
+  notification provider.
+
+## Project structure
+
+```text
+.
+├── api/                         # Azure Functions API
+├── src/                         # React frontend
+├── staticwebapp.config.json     # Azure Static Web Apps auth/routes
+├── .env.example                 # Frontend Microsoft Graph env values
+└── package.json
+```
 
 ## Local setup
 
-1. Install dependencies:
+Install frontend dependencies:
 
-   ```bash
-   npm install
-   cd functions && npm install && cd ..
-   ```
+```bash
+npm install
+```
 
-2. Create a Firebase project from the Firebase Console.
-3. Enable these Firebase products:
-   - Authentication -> Email/Password
-   - Firestore Database
-   - Hosting
-   - Cloud Messaging
-   - Functions, if you want closed-app push notifications
-4. Copy `.env.example` to `.env` and fill in the Firebase web app values.
-5. In Google Cloud Console for the same project:
-   - Enable the Google Calendar API.
-   - Create an OAuth 2.0 Web client ID.
-   - Add your local and deployed origins, such as `http://localhost:5173` and your Firebase Hosting URL.
-   - Put the client ID in `VITE_GOOGLE_CLIENT_ID`.
-6. Set `VITE_TEAM_CALENDAR_ID` to the shared team calendar ID, or use `primary` while testing.
-7. Fill `public/firebase-messaging-sw.js` with the same Firebase web config values if you want background notifications.
+Install API dependencies:
 
-Run locally:
+```bash
+cd api
+npm install
+cd ..
+```
+
+Copy environment examples:
+
+```bash
+cp .env.example .env
+cp api/local.settings.example.json api/local.settings.json
+```
+
+Fill `.env`:
+
+```text
+VITE_AZURE_CLIENT_ID=<your Microsoft Entra app client ID>
+VITE_AZURE_TENANT_ID=<tenant ID, or common while testing>
+VITE_MICROSOFT_CALENDAR_ID=<optional calendar ID; leave blank to use the signed-in user's default calendar>
+```
+
+For local API persistence, either:
+
+- Run Azurite and set `AZURE_STORAGE_CONNECTION_STRING=UseDevelopmentStorage=true`, or
+- Put an Azure Storage account connection string in `api/local.settings.json`.
+
+If `AZURE_STORAGE_CONNECTION_STRING` is blank, the API falls back to in-memory data for local development only.
+
+## Run locally
+
+Terminal 1, start the frontend:
 
 ```bash
 npm run dev
 ```
 
-Build locally:
+Terminal 2, start the Azure Functions API:
+
+```bash
+cd api
+npm start
+```
+
+Open the Vite URL, usually:
+
+```text
+http://localhost:5173
+```
+
+Local Vite development uses a dev-only signed-in user because Azure Static Web Apps auth only exists when deployed or when
+using the Static Web Apps CLI.
+
+## Build
+
+Frontend:
 
 ```bash
 npm run build
 ```
 
-## Deploy to a Google/Firebase account
-
-Install or log in to the Firebase CLI, then run:
+API:
 
 ```bash
-firebase use --add
-npm run build
-firebase deploy
+npm run build:api
 ```
 
-If using Cloud Functions notifications:
+## Deploy to Microsoft Azure
 
-```bash
-cd functions
-npm run build
-cd ..
-firebase deploy --only functions
-```
+1. Create an Azure Storage account for Table Storage.
+2. Create an Azure Static Web App and connect it to this repository.
+3. Configure the Static Web App build:
+   - App location: `/`
+   - API location: `api`
+   - Output location: `dist`
+4. Add app settings to the Static Web App API:
+   - `AZURE_STORAGE_CONNECTION_STRING`
+   - `RAPTOR_TABLE_NAME` (optional, defaults to `RaptorRobotics`)
+5. Configure authentication:
+   - Use Microsoft Entra ID for basic Microsoft sign-in, or
+   - Use Microsoft Entra External ID if you need student self-registration with email verification and password rules.
+6. Register a Microsoft Entra app for Microsoft Graph Calendar:
+   - Add SPA redirect URI for your deployed Static Web Apps URL.
+   - Add delegated permission `Calendars.ReadWrite`.
+   - Put the client ID and tenant ID in the Static Web App frontend environment variables.
+
+## About the original password request
+
+The app is now Azure-based, so passwords are managed by Microsoft Entra rather than by this React app. That is the safer
+Azure pattern because the app never stores or sees student passwords. To enforce "unique password up to 8 characters,"
+configure that in Microsoft Entra External ID custom policies or user flows. Note that an 8-character maximum is weaker
+than modern security recommendations; a minimum length with no short maximum is safer.
 
 ## Missing functionality or decisions before real team use
 
-- **Account approval:** The current app accepts any verified email. A real team should add an allowlist, mentor approval,
-  or school-domain-only rule before students use it.
-- **Password wording:** Firebase does not let the app check whether a password is "unique" because passwords are never
-  exposed. The app enforces the requested 8-character maximum, but uniqueness is handled by each user choosing a private
-  password.
-- **Google Calendar permissions:** Users must connect Google Calendar before their attendance plans can create or update
-  events. For a production team calendar, create a shared team calendar and make sure the OAuth app has approved access.
-- **Deleting Calendar events:** The app deletes attendance records from Firestore, but it does not currently delete the
-  matching Google Calendar event. Add Calendar event delete support if that workflow matters.
-- **Notification delivery:** Foreground notifications work after permission is granted. Reliable phone notifications while
-  the app is closed require deploying the included Firebase Cloud Functions and configuring the messaging service worker.
-- **Adult moderation:** Updates, comments, roles, and hours are self-service. Add mentor/admin moderation if the team needs
-  approved posts, locked roles, or official attendance records.
+- **Account approval:** Decide whether any verified Microsoft account can join, or whether mentors should approve accounts
+  or restrict sign-up to school/team email domains.
+- **Email verification and password policy:** Configure these in Microsoft Entra External ID. They are not hard-coded in
+  the frontend.
+- **Calendar ownership:** The current Microsoft Graph integration writes to the signed-in user's calendar, or to a calendar
+  ID in `VITE_MICROSOFT_CALENDAR_ID` if that user has access.
+- **Phone notifications:** The app saves notification targets. Real phone notifications require wiring Azure Communication
+  Services SMS, Azure Notification Hubs, Teams webhooks, or another provider from the API.
 - **Official attendance:** Planned hours are not the same as checked-in hours. Add check-in/check-out or mentor approval if
   these totals will be used for awards, eligibility, or official records.

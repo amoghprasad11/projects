@@ -37,7 +37,8 @@ button {
     background 0.2s ease;
 }
 
-button:hover:not(:disabled) {
+button:hover:not(:disabled),
+.button-link:hover {
   box-shadow: 0 10px 24px rgb(217 39 46 / 22%);
   transform: translateY(-1px);
 }
@@ -71,6 +72,35 @@ button.danger {
 button.small {
   font-size: 0.82rem;
   padding: 0.45rem 0.75rem;
+}
+
+.button-link,
+.logout-link {
+  align-items: center;
+  border-radius: 999px;
+  display: inline-flex;
+  font-weight: 800;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.button-link {
+  background: #d9272e;
+  color: #fff;
+  padding: 0.85rem 1.25rem;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+}
+
+.secondary-link {
+  background: #e9eef8;
+  color: #243147;
+}
+
+.logout-link {
+  color: #fff;
 }
 
 main {
@@ -267,6 +297,12 @@ textarea {
   font-size: 0.92rem;
 }
 
+.inline-form {
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: minmax(170px, 1fr) auto;
+}
+
 .dashboard-grid {
   display: grid;
   gap: 1rem;
@@ -460,6 +496,7 @@ textarea {
   .hero-grid,
   .dashboard-grid,
   .status-strip,
+  .inline-form,
   .form-grid,
   .role-picker,
   .role-grid,

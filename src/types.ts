@@ -1,27 +1,36 @@
-import type { Timestamp } from "firebase/firestore";
-
 export const ROLE_OPTIONS = ["Driver", "Builder", "Coder", "Notebooker"] as const;
 
 export type TeamRole = (typeof ROLE_OPTIONS)[number];
+
+export type ClientPrincipal = {
+  identityProvider: string;
+  userId: string;
+  userDetails: string;
+  userRoles: string[];
+  claims?: Array<{
+    typ: string;
+    val: string;
+  }>;
+};
 
 export type Member = {
   id: string;
   displayName: string;
   email: string;
   roles: TeamRole[];
-  updatedAt?: Timestamp;
+  updatedAt?: string;
 };
 
 export type AvailabilityEntry = {
   id: string;
   uid: string;
   memberName: string;
-  start: Timestamp;
-  end: Timestamp;
+  start: string;
+  end: string;
   notes?: string;
   calendarEventId?: string;
-  createdAt?: Timestamp;
-  updatedAt?: Timestamp;
+  createdAt?: string;
+  updatedAt?: string;
 };
 
 export type ActivityHistoryItem = {
@@ -30,7 +39,7 @@ export type ActivityHistoryItem = {
   actorName: string;
   type: "availability_created" | "availability_updated" | "availability_deleted" | "roles_updated";
   summary: string;
-  createdAt?: Timestamp;
+  createdAt?: string;
 };
 
 export type TeamUpdate = {
@@ -38,7 +47,7 @@ export type TeamUpdate = {
   authorUid: string;
   authorName: string;
   body: string;
-  createdAt?: Timestamp;
+  createdAt?: string;
 };
 
 export type Comment = {
@@ -47,5 +56,13 @@ export type Comment = {
   authorUid: string;
   authorName: string;
   body: string;
-  createdAt?: Timestamp;
+  createdAt?: string;
+};
+
+export type AppState = {
+  members: Member[];
+  availability: AvailabilityEntry[];
+  history: ActivityHistoryItem[];
+  updates: TeamUpdate[];
+  comments: Comment[];
 };
