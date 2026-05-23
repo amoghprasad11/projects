@@ -1,0 +1,53 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(uid) {
+      return isVerified() && request.auth.uid == uid;
+    }
+
+    match /members/{memberId} {
+      allow read: if isVerified();
+      allow create, update: if isOwner(memberId);
+      allow delete: if false;
+    }
+
+    match /availability/{entryId} {
+      allow read: if isVerified();
+      allow create: if isVerified() && request.resource.data.uid == request.auth.uid;
+      allow update: if isVerified() && resource.data.uid == request.auth.uid && request.resource.data.uid == request.auth.uid;
+      allow delete: if isVerified() && resource.data.uid == request.auth.uid;
+    }
+
+    match /activityHistory/{historyId} {
+      allow read: if isVerified();
+      allow create: if isVerified() && request.resource.data.actorUid == request.auth.uid;
+      allow update, delete: if false;
+    }
+
+    match /updates/{updateId} {
+      allow read: if isVerified();
+      allow create: if isVerified() && request.resource.data.authorUid == request.auth.uid;
+      allow update, delete: if isVerified() && resource.data.authorUid == request.auth.uid;
+    }
+
+    match /comments/{commentId} {
+      allow read: if isVerified();
+      allow create: if isVerified() && request.resource.data.authorUid == request.auth.uid;
+      allow update, delete: if isVerified() && resource.data.authorUid == request.auth.uid;
+    }
+
+    match /notificationTokens/{memberId} {
+      allow read: if false;
+      allow create, update, delete: if isOwner(memberId);
+    }
+  }
+}

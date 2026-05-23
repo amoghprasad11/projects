@@ -1,0 +1,6 @@
+<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Raptor Robotics A team icon">
+  <rect width="128" height="128" rx="28" fill="#111827"/>
+  <path d="M30 82c16-5 29-17 39-36 13 4 23 13 29 27-10-4-20-4-29 0 6 7 14 12 25 15-25 9-47 6-64-6Z" fill="#d9272e"/>
+  <circle cx="75" cy="47" r="5" fill="#fff"/>
+  <path d="M41 88h50v10H41z" fill="#fff"/>
+</svg>
